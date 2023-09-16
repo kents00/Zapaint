@@ -15,9 +15,9 @@ import os
 from bpy.types import Panel, Operator
 
 
-class Zapaint_op_Shaders(Operator):
+class Zapaint_op_Materials(Operator):
     bl_label = ""
-    bl_idname = "zapaint.op.shaders"
+    bl_idname = "zapaint.op.materials"
 
     @classmethod
     def poll(cls,context):
@@ -29,6 +29,17 @@ class Zapaint_op_Shaders(Operator):
 class Zapaint_op_Node(Operator):
     bl_label = ""
     bl_idname = "zapaint.op.node"
+
+    @classmethod
+    def poll(cls,context):
+        pass
+
+    def execute(self,context):
+        pass
+
+class Zapaint_op_Brush(Operator):
+    bl_label = ""
+    bl_idname = "zapaint.op.brush"
 
     @classmethod
     def poll(cls,context):
@@ -72,9 +83,9 @@ class Zapaint_pl_Base:
     def poll(cls, context):
         return context.scene.render.engine == 'BLENDER_EEVEE'
 
-class Zapaint_pl_Shaders(Zapaint_pl_Base,Panel):
+class Zapaint_pl_Materials(Zapaint_pl_Base,Panel):
     bl_parent_id = "PiXel_pl_Base"
-    bl_label = "Shaders"
+    bl_label = "Materials"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_context = ''
@@ -101,6 +112,20 @@ class Zapaint_pl_Node(Zapaint_pl_Base,Panel):
 
     def draw(self, context):
         pass
+class Zapaint_pl_Brush(Zapaint_pl_Base,Panel):
+    bl_parent_id = "PiXel_pl_Base"
+    bl_label = "Brush"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_context = ''
+    bl_order = 3
+
+    @classmethod
+    def poll(cls, context):
+        return not False
+
+    def draw(self, context):
+        pass
 
 class Zapaint_pl_Palettes(Zapaint_pl_Base,Panel):
     bl_parent_id = "PiXel_pl_Base"
@@ -108,7 +133,7 @@ class Zapaint_pl_Palettes(Zapaint_pl_Base,Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_context = ''
-    bl_order = 2
+    bl_order = 4
 
     @classmethod
     def poll(cls, context):
@@ -123,7 +148,7 @@ class Zapaint_pl_Layers(Zapaint_pl_Base,Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_context = ''
-    bl_order = 3
+    bl_order = 5
 
     @classmethod
     def poll(cls, context):

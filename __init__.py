@@ -12,13 +12,16 @@ bl_info = {
 
 import bpy
 import os
-from bpy.types import Panel, Operator
 
 class Zapaint_UI:
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Zapaint"
     bl_options = {"HEADER_LAYOUT_EXPAND"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.scene.render.engine == 'BLENDER_EEVEE'
 
 
 class Zapaint_pl_Logs(Zapaint_UI,bpy.types.Panel):
@@ -32,50 +35,50 @@ class Zapaint_pl_Logs(Zapaint_UI,bpy.types.Panel):
 
 class Zapaint_pl_Materials(Zapaint_UI, bpy.types.Panel):
     bl_idname = "Zapaint_pl_Materials"
-    bl_parentid = "Zapaint_pl_Logs"
+    bl_parent_id = "Zapaint_pl_Logs"
     bl_label = "Materials"
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text="This is the main panel.")
+        layout.label(text="First Sub Panel of Panel 1.")
 
 class Zapaint_pl_Nodes(Zapaint_UI, bpy.types.Panel):
     bl_idname = "Zapaint_pl_Nodes"
-    bl_parentid = "Zapaint_pl_Logs"
+    bl_parent_id = "Zapaint_pl_Logs"
     bl_label = "Nodes"
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text="This is the main panel.")
+        layout.label(text="Second Sub Panel of Panel 1.")
 
 class Zapaint_pl_Brush(Zapaint_UI, bpy.types.Panel):
     bl_idname = "Zapaint_pl_Brush"
-    bl_parentid = "Zapaint_pl_Logs"
+    bl_parent_id = "Zapaint_pl_Logs"
     bl_label = "Brush"
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text="This is the main panel.")
+        layout.label(text="Third Sub Panel of Panel 1.")
 
 class Zapaint_pl_Layers(Zapaint_UI, bpy.types.Panel):
     bl_idname = "Zapaint_pl_Layers"
-    bl_parentid = "Zapaint_pl_Logs"
+    bl_parent_id = "Zapaint_pl_Logs"
     bl_label = "Layers"
 
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text="This is the main panel.")
+        layout.label(text="Fourth Sub Panel of Panel 1.")
 
 class Zapaint_pl_Palettes(Zapaint_UI, bpy.types.Panel):
     bl_idname = "Zapaint_pl_Palettes"
-    bl_parentid = "Zapaint_pl_Logs"
+    bl_parent_id = "Zapaint_pl_Logs"
     bl_label = "Palettes"
 
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text="This is the main panel.")
+        layout.label(text="Fifth Sub Panel of Panel 1.")
 
 classes = (
     Zapaint_pl_Logs,
@@ -96,5 +99,4 @@ def unregister():
 
 
 if __name__ == "__main__":
-    register()
     register()

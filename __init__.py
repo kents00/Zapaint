@@ -13,6 +13,136 @@ bl_info = {
 import bpy
 import os
 
+class UnifiedPaintPanel:
+    # subclass must set
+    # bl_space_type = 'IMAGE_EDITOR'
+    # bl_region_type = 'UI'
+
+    @staticmethod
+    def get_brush_mode(context):
+        """ Get the correct mode for this context. For any context where this returns None,
+            no brush options should be displayed."""
+        mode = context.mode
+
+        from bl_ui.space_toolsystem_common import ToolSelectPanelHelper
+        tool = ToolSelectPanelHelper.tool_active_from_context(context)
+
+        if not tool:
+            # If there is no active tool, then there can't be an active brush.
+            return None
+
+        if not tool.has_datablock:
+            # tool.has_datablock is always true for tools that use brushes.
+            return None
+
+        space_data = context.space_data
+        tool_settings = context.tool_settings
+
+        if space_data:
+            space_type = space_data.type
+            if space_type in {'VIEW_3D', 'PROPERTIES'}:
+                if mode == 'PAINT_TEXTURE':
+                    if tool_settings.image_paint:
+                        return mode
+                    else:
+                        return None
+                return mode
+        return None
+
+    @staticmethod
+    def paint_settings(context):
+        tool_settings = context.tool_settings
+
+        mode = UnifiedPaintPanel.get_brush_mode(context)
+
+        # 3D paint settings
+        if mode == 'PAINT_TEXTURE':
+            return tool_settings.image_paint
+        return None
+
+    @staticmethod
+    def prop_unified(
+            layout,
+            context,
+            brush,
+            prop_name,
+            unified_name=None,
+            pressure_name=None,
+            icon='NONE',
+            text=None,
+            slider=False,
+            header=False,
+    ):
+        """ Generalized way of adding brush options to the UI,
+            along with their pen pressure setting and global toggle, if they exist. """
+        row = layout.row(align=True)
+        ups = context.tool_settings.unified_paint_settings
+        prop_owner = brush
+        if unified_name and getattr(ups, unified_name):
+            prop_owner = ups
+
+        row.prop(prop_owner, prop_name, icon=icon, text=text, slider=slider)
+
+        if pressure_name:
+            row.prop(brush, pressure_name, text="")
+
+        if unified_name and not header:
+            # NOTE: We don't draw UnifiedPaintSettings in the header to reduce clutter. D5928#136281
+            row.prop(ups, unified_name, text="", icon='BRUSHES_ALL')
+
+        return row
+
+    @staticmethod
+    def prop_unified_color(parent, context, brush, prop_name, *, text=None):
+        ups = context.tool_settings.unified_paint_settings
+        prop_owner = ups if ups.use_unified_color else brush
+        parent.prop(prop_owner, prop_name, text=text)
+
+    @staticmethod
+    def prop_unified_color_picker(parent, context, brush, prop_name, value_slider=True):
+        ups = context.tool_settings.unified_paint_settings
+        prop_owner = ups if ups.use_unified_color else brush
+        parent.template_color_picker(prop_owner, prop_name, value_slider=value_slider)
+
+
+class Zapaint_op_PasteHexColor(bpy.types.Operator):
+    bl_idname = "zapaintop.paste_colors"
+    bl_label = "Paste HEX"
+    bl_options = {'UNDO', 'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        return (obj and obj.type == 'MESH' and context.tool_settings.image_paint.palette)
+
+    @staticmethod
+    def PastehexColors(self, context):
+        url = str(context.window_manager.clipboard)
+        color = False
+        color_text = []
+        i = 0
+        length = len(url) - 5
+        while i < length:
+            color_text = url[i:i+6]
+            color = True
+            for char in color_text:
+                if char not in ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", 'a', 'A', 'b', 'B', 'c', 'C', 'd', 'D', 'e', 'E', 'f', 'F'):
+                    color = False
+                    i += 1
+                    break
+            if color:
+                R = int(color_text[:2], base=16)/255
+                G = int(color_text[2:4], base=16)/255
+                B = int(color_text[4:6], base=16)/255
+                RGB_color = (R, G, B)
+                bpy.context.tool_settings.image_paint.brush.color = RGB_color
+                bpy.ops.palette.color_add()
+                i += 6
+
+    def execute(self, context):
+        self.PastehexColors(self=self, context=context)
+        return {'FINISHED'}
+
 class Zapaint_UI:
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -60,7 +190,6 @@ class Zapaint_pl_Materials(Zapaint_UI, bpy.types.Panel):
 
             if ob.mode == 'EDIT':
                 row = layout.row(align=True)
-                row.enabled = False
                 row.enabled = True
                 row.operator("object.material_slot_assign", text="Assign")
                 row.operator("object.material_slot_select", text="Select")
@@ -75,14 +204,75 @@ class Zapaint_pl_Nodes(Zapaint_UI, bpy.types.Panel):
         layout = self.layout
         layout.label(text="Second Sub Panel of Panel 1.")
 
-class Zapaint_pl_Brush(Zapaint_UI, bpy.types.Panel):
+
+class Zapaint_pl_Brush(UnifiedPaintPanel,Zapaint_UI, bpy.types.Panel):
     bl_idname = "Zapaint_pl_Brush"
     bl_parent_id = "Zapaint_pl_Logs"
     bl_label = "Brush"
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text="Third Sub Panel of Panel 1.")
+        settings = self.paint_settings(context)
+        brush = settings.brush
+
+        row = layout.row()
+        large_preview = True
+        if large_preview:
+            row.column().template_ID_preview(settings, "brush", new="brush.add", rows=3, cols=8, hide_buttons=False)
+        else:
+            row.column().template_ID(settings, "brush", new="brush.add")
+        col = row.column()
+        col.menu("VIEW3D_MT_brush_context_menu", icon='DOWNARROW_HLT', text="")
+
+        if brush is not None:
+            col.prop(brush, "use_custom_icon", toggle=True, icon='FILE_IMAGE', text="")
+
+            if brush.use_custom_icon:
+                layout.prop(brush, "icon_filepath", text="")
+
+class Zapaint_pl_ColorPicker(Zapaint_UI,bpy.types.Panel):
+    bl_idname = "Zapaint_pl_ColorPicker"
+    bl_parent_id = "Zapaint_pl_Logs"
+    bl_label = "Color Picker"
+
+    def draw(self,context):
+        layout = self.layout.box()
+        brush = context.tool_settings.image_paint.brush
+        col = layout.column()
+        if not brush:
+            col.label(text="Switch to Texture Paint Mode", icon='ERROR')
+        else:
+            if context.tool_settings.image_paint.palette:
+                if brush.color_type == 'COLOR':
+                    row = col.row(align=True)
+                    row.scale_y = 1.5
+                    row.prop(brush, property="color", text="")
+                    row.prop(brush, property="secondary_color", text="")
+                    layout = self.layout
+                    col = layout.column(align=True)
+                    col.enabled = True
+                    col.scale_x = 1.2
+                    col.scale_y = 1.2
+                    col.operator("zapaintop.paste_colors", icon='PASTEDOWN')
+
+class Zapaint_pl_Palettes(UnifiedPaintPanel,Zapaint_UI, bpy.types.Panel):
+    bl_idname = "Zapaint_pl_Palettes"
+    bl_parent_id = "Zapaint_pl_Logs"
+    bl_label = "Palettes"
+
+    def draw(self, context):
+        ob = context.active_object
+        if ob and ob.type == 'MESH':
+            tool_settings = context.tool_settings.image_paint
+            layout = self.layout.box()
+            col = layout.column()
+            col.template_ID(tool_settings, "palette", new="palette.new")
+
+        brush = context.tool_settings.image_paint.brush
+        if not brush:
+            col.label(text="Switch to Texture Paint Mode", icon='ERROR')
+        if tool_settings.palette:
+                col.template_palette(tool_settings, "palette", color=True)
 
 class Zapaint_pl_Layers(Zapaint_UI, bpy.types.Panel):
     bl_idname = "Zapaint_pl_Layers"
@@ -94,23 +284,16 @@ class Zapaint_pl_Layers(Zapaint_UI, bpy.types.Panel):
         layout = self.layout
         layout.label(text="Fourth Sub Panel of Panel 1.")
 
-class Zapaint_pl_Palettes(Zapaint_UI, bpy.types.Panel):
-    bl_idname = "Zapaint_pl_Palettes"
-    bl_parent_id = "Zapaint_pl_Logs"
-    bl_label = "Palettes"
-
-
-    def draw(self, context):
-        layout = self.layout
-        layout.label(text="Fifth Sub Panel of Panel 1.")
 
 classes = (
+    Zapaint_op_PasteHexColor,
     Zapaint_pl_Logs,
     Zapaint_pl_Materials,
     Zapaint_pl_Nodes,
     Zapaint_pl_Brush,
-    Zapaint_pl_Layers,
+    Zapaint_pl_ColorPicker,
     Zapaint_pl_Palettes,
+    Zapaint_pl_Layers,
 )
 
 def register():

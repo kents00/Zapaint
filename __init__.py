@@ -14,9 +14,6 @@ import bpy
 import os
 
 class UnifiedPaintPanel:
-    # subclass must set
-    # bl_space_type = 'IMAGE_EDITOR'
-    # bl_region_type = 'UI'
 
     @staticmethod
     def get_brush_mode(context):
@@ -212,23 +209,31 @@ class Zapaint_pl_Brush(UnifiedPaintPanel,Zapaint_UI, bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        settings = self.paint_settings(context)
-        brush = settings.brush
 
-        row = layout.row()
-        large_preview = True
-        if large_preview:
-            row.column().template_ID_preview(settings, "brush", new="brush.add", rows=3, cols=8, hide_buttons=False)
+        if context.active_object and context.active_object.type == 'MESH':
+            settings = self.paint_settings(context)
+
+            if settings is not None:
+                brush = settings.brush
+
+                row = layout.row()
+                large_preview = True
+                if large_preview:
+                    row.column().template_ID_preview(settings, "brush", new="brush.add", rows=3, cols=8, hide_buttons=False)
+                else:
+                    row.column().template_ID(settings, "brush", new="brush.add")
+                col = row.column()
+                col.menu("VIEW3D_MT_brush_context_menu", icon='DOWNARROW_HLT', text="")
+
+                if brush is not None:
+                    col.prop(brush, "use_custom_icon", toggle=True, icon='FILE_IMAGE', text="")
+
+                    if brush.use_custom_icon:
+                        layout.prop(brush, "icon_filepath", text="")
+            else:
+                layout.label(text="Switch to Texture Paint Mode", icon='ERROR')
         else:
-            row.column().template_ID(settings, "brush", new="brush.add")
-        col = row.column()
-        col.menu("VIEW3D_MT_brush_context_menu", icon='DOWNARROW_HLT', text="")
-
-        if brush is not None:
-            col.prop(brush, "use_custom_icon", toggle=True, icon='FILE_IMAGE', text="")
-
-            if brush.use_custom_icon:
-                layout.prop(brush, "icon_filepath", text="")
+            layout.label(text="Select a mesh object to paint", icon='ERROR')
 
 class Zapaint_pl_ColorPicker(Zapaint_UI,bpy.types.Panel):
     bl_idname = "Zapaint_pl_ColorPicker"
@@ -237,23 +242,44 @@ class Zapaint_pl_ColorPicker(Zapaint_UI,bpy.types.Panel):
 
     def draw(self,context):
         layout = self.layout.box()
-        brush = context.tool_settings.image_paint.brush
         col = layout.column()
-        if not brush:
-            col.label(text="Switch to Texture Paint Mode", icon='ERROR')
-        else:
-            if context.tool_settings.image_paint.palette:
-                if brush.color_type == 'COLOR':
-                    row = col.row(align=True)
-                    row.scale_y = 1.5
-                    row.prop(brush, property="color", text="")
-                    row.prop(brush, property="secondary_color", text="")
-                    layout = self.layout
-                    col = layout.column(align=True)
-                    col.enabled = True
-                    col.scale_x = 1.2
-                    col.scale_y = 1.2
-                    col.operator("zapaintop.paste_colors", icon='PASTEDOWN')
+        if context.active_object and context.active_object.type == 'MESH':
+            brush = context.tool_settings.image_paint.brush
+            if not brush:
+                col.label(text="Switch to Texture Paint Mode", icon='ERROR')
+            else:
+                if context.tool_settings.image_paint.palette:
+                    if brush.color_type == 'COLOR':
+                        UnifiedPaintPanel.prop_unified_color_picker(layout, context, brush, "color", value_slider=True)
+                        row = layout.row(align=True)
+                        UnifiedPaintPanel.prop_unified_color(row, context, brush, "color", text="")
+                        UnifiedPaintPanel.prop_unified_color(row, context, brush, "secondary_color", text="")
+                        row.separator()
+                        row.operator("paint.brush_colors_flip", icon='FILE_REFRESH', text="", emboss=False)
+                    elif brush.color_type == 'GRADIENT':
+                        layout.template_color_ramp(brush, "gradient", expand=True)
+                        layout.use_property_split = True
+                        col = layout.column()
+
+                        if brush.image_tool == 'DRAW':
+                            UnifiedPaintPanel.prop_unified(
+                                col,
+                                context,
+                                brush,
+                                "secondary_color",
+                                unified_name="use_unified_color",
+                                text="Background Color",
+                                header=True,
+                            )
+
+                            col.prop(brush, "gradient_stroke_mode", text="Gradient Mapping")
+                            if brush.gradient_stroke_mode in {'SPACING_REPEAT', 'SPACING_CLAMP'}:
+                                col.prop(brush, "grad_spacing")
+                    else:
+                        col.label(text="Create New Color Palette", icon='ERROR')
+                else:
+                    col.label(text="Create New Color Palette", icon='ERROR')
+
 
 class Zapaint_pl_Palettes(UnifiedPaintPanel,Zapaint_UI, bpy.types.Panel):
     bl_idname = "Zapaint_pl_Palettes"
@@ -268,11 +294,11 @@ class Zapaint_pl_Palettes(UnifiedPaintPanel,Zapaint_UI, bpy.types.Panel):
             col = layout.column()
             col.template_ID(tool_settings, "palette", new="palette.new")
 
-        brush = context.tool_settings.image_paint.brush
-        if not brush:
-            col.label(text="Switch to Texture Paint Mode", icon='ERROR')
-        if tool_settings.palette:
-                col.template_palette(tool_settings, "palette", color=True)
+            brush = context.tool_settings.image_paint.brush
+            if not brush:
+                col.label(text="Switch to Texture Paint Mode", icon='ERROR')
+            if tool_settings.palette:
+                    col.template_palette(tool_settings, "palette", color=True)
 
 class Zapaint_pl_Layers(Zapaint_UI, bpy.types.Panel):
     bl_idname = "Zapaint_pl_Layers"

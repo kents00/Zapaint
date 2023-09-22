@@ -13,7 +13,7 @@ bl_info = {
 import bpy
 import bpy.utils.previews
 import os
-from .CustomFunctions import *
+from .ZapaintFunctions import *
 
 class ZapaintLayersData(bpy.types.PropertyGroup):
 
@@ -443,6 +443,15 @@ class Zapaint_pl_Materials(Zapaint_UI, bpy.types.Panel):
                         row.prop(material.zapaint_layers_data, property='shading', text='')
                         row.prop(material.zapaint_layers_data, property='transparent', text='Transparent')
 
+            elif not ob.material_slots:
+                layout = self.layout.box()
+                row = layout.row()
+                row.box().label(text="Create New Material", icon="ERROR")
+            else:
+                layout = self.layout.box()
+                row = layout.row()
+                row.box().label(text="Select Material", icon="ERROR")
+
 class Zapaint_pl_Brush(UnifiedPaintPanel,Zapaint_UI, bpy.types.Panel):
     bl_idname = "Zapaint_pl_Brush"
     bl_parent_id = "Zapaint_pl_Logs"
@@ -613,6 +622,7 @@ class Zapaint_pl_Layers(Zapaint_UI, bpy.types.Panel):
                         rowbase.scale_x = 1.5
                         row = rowbase.row(align=True)
                         row2 = rowbase.row(align=True)
+                        row4 = rowbase.row(align=True)
 
                         active_icon = 'RADIOBUT_OFF'
                         hide_icon = 'HIDE_OFF'
@@ -628,6 +638,7 @@ class Zapaint_pl_Layers(Zapaint_UI, bpy.types.Panel):
                             lock_icon = 'LOCKED'
                             row.enabled = False
                             row2.enabled = False
+                            row4.enabled = False
 
                         row.prop(layer, property='active', icon=active_icon, text='', emboss=False)
                         row.prop(layer, property='hide', text='', icon=hide_icon)
@@ -642,19 +653,19 @@ class Zapaint_pl_Layers(Zapaint_UI, bpy.types.Panel):
                         op = row2.operator("zapaint.op_pack_layer_image", text='', icon=iconPack)
                         op.index = i
                         row3 = rowbase.row(align=True)
-                        row3.operator("zapaint.op_layers_duplicate", text='', icon_value=duplicate_layer.icon_id)
+                        row4.operator("zapaint.op_layers_duplicate", text='', icon_value=duplicate_layer.icon_id)
                         row3.prop(layer, property='lock', text='', icon=lock_icon)
-                        row3.operator("zapaint.op_layers_delete_layer", text='', icon_value=trash.icon_id)
+                        row4.operator("zapaint.op_layers_delete_layer", text='', icon_value=trash.icon_id)
 
             elif not ob.material_slots:
                 layout = self.layout.box()
                 row = layout.row()
-                row.box().label(text="Add Material Slot!", icon="ERROR")
+                row.box().label(text="Create New Material", icon="ERROR")
 
             else:
                 layout = self.layout.box()
                 row = layout.row()
-                row.box().label(text="Select Material!", icon="ERROR")
+                row.box().label(text="Select Material", icon="ERROR")
 
 Zapaint_Layers_Preview = {}
 

@@ -11,6 +11,7 @@ bl_info = {
     }
 
 import bpy
+import bpy.utils.previews
 import os
 from .CustomFunctions import *
 
@@ -429,15 +430,18 @@ class Zapaint_pl_Materials(Zapaint_UI, bpy.types.Panel):
                 row.operator("object.material_slot_select", text="Select")
                 row.operator("object.material_slot_deselect", text="Deselect")
 
-class Zapaint_pl_Nodes(Zapaint_UI, bpy.types.Panel):
-    bl_idname = "Zapaint_pl_Nodes"
-    bl_parent_id = "Zapaint_pl_Logs"
-    bl_label = "Nodes"
+            if material := ob.active_material:
+                principled_BSDF = None
+                for node in material.node_tree.nodes:
+                    if node.type == 'BSDF_PRINCIPLED':
+                        principled_BSDF = node
+                        break
 
-    def draw(self, context):
-        layout = self.layout
-        layout.label(text="Second Sub Panel of Panel 1.")
-
+                if principled_BSDF:
+                    if material.psd_layers_layers:
+                        row = layout.row()
+                        row.prop(material.zapaint_layers_data, property='shading', text='')
+                        row.prop(material.zapaint_layers_data, property='transparent', text='Transparent')
 
 class Zapaint_pl_Brush(UnifiedPaintPanel,Zapaint_UI, bpy.types.Panel):
     bl_idname = "Zapaint_pl_Brush"
@@ -554,13 +558,14 @@ class Zapaint_pl_Layers(Zapaint_UI, bpy.types.Panel):
 
         if ob and ob.type == 'MESH':
             if material := ob.active_material:
-                layout = self.layout.box().column()
+                layout = self.layout.box()
 
                 row = layout.row(align=True)
                 row.scale_y = 1.5
                 row.scale_x = 1.5
                 material = context.active_object.active_material
                 row = layout.row(align=True)
+                row.enabled = True
                 row.scale_y = 1.5
                 row.scale_x = 1.5
                 row.operator("zapaint.op_layers_add_layer", text='ADD LAYER', icon_value=new_layer.icon_id)
@@ -576,13 +581,10 @@ class Zapaint_pl_Layers(Zapaint_UI, bpy.types.Panel):
                 if layers:
                     row3 = layout.row(align=True)
                     row3.scale_y = 1.5
-                    col3 = layout.column(align=True)
+                    col3 = layout.row(align=True)
                     col3.scale_y = 1.5
 
-                    row.prop(activeLayer, property='name', text='')
                     row2 = row.row(align=True)
-                    row2.operator("zapaint.op_layers_duplicate", text='', icon_value=duplicate_layer.icon_id)
-                    row2.operator("zapaint.op_layers_delete_layer", text='', icon_value=trash.icon_id)
                     row2.operator("zapaint.op_layers_up", text='', icon='TRIA_UP')
                     row2.operator("zapaint.op_layers_down", text='', icon='TRIA_DOWN')
 
@@ -627,25 +629,10 @@ class Zapaint_pl_Layers(Zapaint_UI, bpy.types.Panel):
                             row.enabled = False
                             row2.enabled = False
 
-                        if layer.active and layer.nodeGroupTree:
-                            image = None
-                            for node in layer.nodeGroupTree.nodes:
-                                if node.name.startswith("IMAGE_"):
-                                    image = node.image
-                                    break
-                            if image:
-                                if context.tool_settings.image_paint.canvas and context.tool_settings.image_paint.canvas.name == image.name:
-                                    row.label(text='', icon_value=brush.icon_id)
-                                else:
-                                    row.label(text='', icon='BLANK1')
-                            else:
-                                row.label(text='', icon='BLANK1')
-
-                        else:
-                            row.label(text='', icon='BLANK1')
-
                         row.prop(layer, property='active', icon=active_icon, text='', emboss=False)
                         row.prop(layer, property='hide', text='', icon=hide_icon)
+                        row.scale_y = 1.0
+                        row.scale_x = 1.0
                         row.prop(layer, property="name", text='')
 
                         iconPack = "PACKAGE"
@@ -655,7 +642,9 @@ class Zapaint_pl_Layers(Zapaint_UI, bpy.types.Panel):
                         op = row2.operator("zapaint.op_pack_layer_image", text='', icon=iconPack)
                         op.index = i
                         row3 = rowbase.row(align=True)
+                        row3.operator("zapaint.op_layers_duplicate", text='', icon_value=duplicate_layer.icon_id)
                         row3.prop(layer, property='lock', text='', icon=lock_icon)
+                        row3.operator("zapaint.op_layers_delete_layer", text='', icon_value=trash.icon_id)
 
             elif not ob.material_slots:
                 layout = self.layout.box()
@@ -680,7 +669,6 @@ classes = (
     Zapaint_op_LayersDeleteLayer,
     Zapaint_pl_Logs,
     Zapaint_pl_Materials,
-    Zapaint_pl_Nodes,
     Zapaint_pl_Brush,
     Zapaint_pl_ColorPicker,
     Zapaint_pl_Palettes,

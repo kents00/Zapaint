@@ -293,13 +293,13 @@ def nodes_linkLayers(material, layers, nodeTree, nodes, lastNodeGroup, newNodeGr
                 for node in nodes:
                     if node.type == "BSDF_PRINCIPLED":
                         BSDFnode = node
-                        if material.psd_layers_data.shading == 'PRINCIPLED_BSDF':
+                        if material.zapaint_layers_data.shading == 'PRINCIPLED_BSDF':
                             nodeTree.links.new(newNodeGroup.outputs[0], node.inputs[0])
 
-                        elif material.psd_layers_data.shading == 'EMISSIVE':
+                        elif material.zapaint_layers_data.shading == 'EMISSIVE':
                             nodeTree.links.new(newNodeGroup.outputs[0], node.inputs[19])
 
-                        if material.psd_layers_data.transparent:
+                        if material.zapaint_layers_data.transparent:
                             nodeTree.links.new(newNodeGroup.outputs[1], BSDFnode.inputs[21])
                         break
 

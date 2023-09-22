@@ -395,7 +395,7 @@ class Zapaint_pl_Logs(Zapaint_UI,bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text="This is the main panel.")
+        layout.label(text="")
 
 
 class Zapaint_pl_Materials(Zapaint_UI, bpy.types.Panel):

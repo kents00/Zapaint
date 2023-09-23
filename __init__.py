@@ -9,7 +9,6 @@ bl_info = {
     "wiki_url" : "https://github.com/kents00/Zapaint",
     "tracker_url" : "https://github.com/kents00/Zapaint/issues",
     }
-
 import bpy
 import bpy.utils.previews
 import os
@@ -395,7 +394,6 @@ class Zapaint_pl_Logs(Zapaint_UI,bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text="")
 
 
 class Zapaint_pl_Materials(Zapaint_UI, bpy.types.Panel):
@@ -481,9 +479,13 @@ class Zapaint_pl_Brush(UnifiedPaintPanel,Zapaint_UI, bpy.types.Panel):
                     if brush.use_custom_icon:
                         layout.prop(brush, "icon_filepath", text="")
             else:
-                layout.label(text="Switch to Texture Paint Mode", icon='ERROR')
+                layout = self.layout.box()
+                row = layout.row()
+                row.box().label(text="Switch to Texture Paint", icon="ERROR")
         else:
-            layout.label(text="Select a mesh object to paint", icon='ERROR')
+            layout = self.layout.box()
+            row = layout.row()
+            row.box().label(text="Switch to Texture Paint", icon="ERROR")
 
 class Zapaint_pl_ColorPicker(Zapaint_UI,bpy.types.Panel):
     bl_idname = "Zapaint_pl_ColorPicker"

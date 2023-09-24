@@ -273,7 +273,7 @@ class Zapaint_op_LayersAddLayer(bpy.types.Operator):
 
 class Zapaint_op_LayersDuplicate(bpy.types.Operator):
     bl_idname = "zapaint.op_layers_duplicate"
-    bl_label = "Duplicate PSD Paint Layer"
+    bl_label = "Duplicate Layer"
     bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
@@ -302,7 +302,7 @@ class Zapaint_op_LayersDuplicate(bpy.types.Operator):
 
 class Zapaint_op_LayersDeleteLayer(bpy.types.Operator):
     bl_idname = "zapaint.op_layers_delete_layer"
-    bl_label = "Delete PSD Layer"
+    bl_label = "Delete Layer"
     bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
@@ -383,6 +383,9 @@ class Zapaint_UI:
     bl_category = "Zapaint"
     bl_options = {"HEADER_LAYOUT_EXPAND"}
 
+    bl_region_x = 1.5
+    bl_region_y = 1.5
+
     @classmethod
     def poll(cls, context):
         return context.scene.render.engine == 'BLENDER_EEVEE'
@@ -391,6 +394,10 @@ class Zapaint_UI:
 class Zapaint_pl_Logs(Zapaint_UI,bpy.types.Panel):
     bl_idname = "Zapaint_pl_Logs"
     bl_label = "Zapaint"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None
 
     def draw(self, context):
         layout = self.layout

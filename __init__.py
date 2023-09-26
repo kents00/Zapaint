@@ -443,7 +443,7 @@ class Zapaint_pl_Materials(Zapaint_UI, bpy.types.Panel):
                         break
 
                 if principled_BSDF:
-                    if material.psd_layers_layers:
+                    if material.zapaint_layers_layer:
                         row = layout.row()
                         row.prop(material.zapaint_layers_data, property='shading', text='')
                         row.prop(material.zapaint_layers_data, property='transparent', text='Transparent')

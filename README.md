@@ -16,4 +16,7 @@ Zapaint is a Blender addition paint layer addon that allows you to effortlessly 
 ### Color Palette 
 - Color palettes provide a method for storing and organizing the colors of a brush, allowing them to be easily accessed and reused later on. This functionality proves particularly beneficial when working with multiple colors simultaneously, as it enables efficient color management throughout the creative process
 
+# Issues
+
+If you're having trouble integrating this code into your addon, [open a new issue](https://github.com/kents00/Zapaint/issues). As the module continues to develop, it will be easier for more developers to integrate updates and improve blender's overall user performance!
 

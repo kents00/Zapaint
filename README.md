@@ -1,6 +1,8 @@
 # Zapaint
 Zapaint is a Blender addition paint layer addon that allows you to effortlessly paint your models.
 
+![zapaintpreview](https://github.com/kents00/Zapaint/assets/69900896/c7ad7a80-087a-4c4d-aa59-75a02cb93c95)
+
 ### Materials
 - In this section, you will explore the material of your object and have the ability to assign different shaders as desired. With the use of this addon, specifically the principled bsdf shader, you can achieve your painterly effect on your object's surface.
 

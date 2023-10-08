@@ -1,5 +1,5 @@
 # Zapaint
-Zapaint is a Blender addition paint layer addon that allows you to effortlessly paint your models.
+A Blender addon that aims to transform the 3D model painting process. Through the integration of various features including material management, customizable brushes, color pickers, layers, and color palettes, Zapaint provides artists with a comprehensive set of tools for enhancing efficiency and versatility in their painting endeavors.
 
 ![zapaint](https://github.com/kents00/Zapaint/assets/69900896/1c644639-9313-4324-96fa-3a23d1a94fbe)
 
